@@ -1,0 +1,115 @@
+/* ══════════════════════════════════════════════════════════════════════
+ * Hellyeah · Type roles
+ *
+ * Each utility presets size, line-height, tracking, and weight together so
+ * peers cannot drift apart into one-off `text-[13px]` pairings. Pick by the
+ * role the text plays, not by the pixel size you want.
+ *
+ *   heading-*  page and section turns
+ *   copy-*     multi-line prose (roomier leading)
+ *   label-*    single lines that sit beside controls, icons, or values
+ *
+ * Mono pairs one step below the sans it accompanies: `label-13-mono` under
+ * `label-14`, since matching sizes read optically larger in mono.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+@utility text-heading-32 {
+  font-size: 32px;
+  font-weight: var(--weight-medium);
+  line-height: 1.15;
+  letter-spacing: -0.033em;
+}
+
+@utility text-heading-24 {
+  font-size: 24px;
+  font-weight: var(--weight-medium);
+  line-height: 1.2;
+  letter-spacing: -0.029em;
+}
+
+@utility text-heading-20 {
+  font-size: 20px;
+  font-weight: var(--weight-medium);
+  line-height: 1.3;
+  letter-spacing: -0.024em;
+}
+
+@utility text-heading-16 {
+  font-size: 16px;
+  font-weight: var(--weight-medium);
+  line-height: 1.4;
+  letter-spacing: -0.019em;
+}
+
+@utility text-copy-16 {
+  font-size: 16px;
+  font-weight: var(--weight-regular);
+  line-height: 1.6;
+  letter-spacing: -0.012em;
+}
+
+@utility text-copy-14 {
+  font-size: 14px;
+  font-weight: var(--weight-regular);
+  line-height: 1.6;
+  letter-spacing: -0.008em;
+}
+
+@utility text-copy-13 {
+  font-size: 13px;
+  font-weight: var(--weight-regular);
+  line-height: 1.6;
+  letter-spacing: -0.004em;
+}
+
+@utility text-label-16 {
+  font-size: 16px;
+  font-weight: var(--weight-regular);
+  line-height: 1.25;
+  letter-spacing: -0.019em;
+}
+
+@utility text-label-14 {
+  font-size: 14px;
+  font-weight: var(--weight-regular);
+  line-height: 1.3;
+  letter-spacing: -0.011em;
+}
+
+@utility text-label-13 {
+  font-size: 13px;
+  font-weight: var(--weight-regular);
+  line-height: 1.3;
+  letter-spacing: -0.006em;
+}
+
+@utility text-label-12 {
+  font-size: 12px;
+  font-weight: var(--weight-regular);
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+
+@utility text-label-14-mono {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: var(--weight-regular);
+  line-height: 1.3;
+  letter-spacing: -0.011em;
+}
+
+@utility text-label-13-mono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: var(--weight-regular);
+  line-height: 1.3;
+  letter-spacing: -0.006em;
+}
+
+@utility text-label-12-mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: var(--weight-regular);
+  line-height: 1.3;
+  letter-spacing: 0;
+}

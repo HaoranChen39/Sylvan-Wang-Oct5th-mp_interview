@@ -1,0 +1,106 @@
+/* ══════════════════════════════════════════════════════════════════════
+ * Hellyeah · Brand utilities (trimmed for the exercise)
+ *
+ * Button physics and the selected-chip state. The full file in the product
+ * repo also carries motion helpers; they are not needed here.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Glossy dark button (primary CTA on light surfaces) ── */
+.btn-glossy {
+  color: #fafafa;
+  background: linear-gradient(180deg, #323232 0%, #222 100%);
+  box-shadow:
+    inset 0 0.5px 0 0 rgb(255 255 255 / 0.15),
+    inset 0 -1px 1px 0 #121212,
+    0 2px 4px -1px rgb(13 13 13 / 0.5),
+    0 0 0 0.5px #2a2a2a;
+  transition:
+    box-shadow var(--dur) ease,
+    filter var(--dur) ease,
+    transform var(--dur-fast) ease;
+}
+.btn-glossy:hover {
+  filter: brightness(1.08);
+}
+.btn-glossy:active {
+  box-shadow:
+    inset 0 1px 2px 0 #121212,
+    0 1px 2px -1px rgb(13 13 13 / 0.5),
+    0 0 0 0.5px #2a2a2a;
+  filter: brightness(0.96);
+  transform: scale(0.98);
+}
+
+/* On a dark band the dark glossy would vanish — invert to a light raised pill. */
+.zone-dark .btn-glossy {
+  color: #1a1a1a;
+  background: linear-gradient(180deg, #fff 0%, #eceded 100%);
+  box-shadow:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.9),
+    inset 0 -1px 1px 0 rgb(0 0 0 / 0.1),
+    0 2px 4px -1px rgb(0 0 0 / 0.4),
+    0 0 0 0.5px rgb(0 0 0 / 0.14);
+}
+.zone-dark .btn-glossy:active {
+  box-shadow:
+    inset 0 1px 2px 0 rgb(0 0 0 / 0.16),
+    0 1px 2px -1px rgb(0 0 0 / 0.4),
+    0 0 0 0.5px rgb(0 0 0 / 0.14);
+  filter: brightness(0.97);
+  transform: scale(0.98);
+}
+
+/* ── Glossy Spark CTA — the dark glossy physics carried in Spark Orange ── */
+.btn-glossy-spark {
+  color: #fff;
+  background: linear-gradient(
+    180deg,
+    rgb(var(--spark-rgb)) 0%,
+    rgb(var(--spark-rgb) / 0.88) 100%
+  );
+  box-shadow:
+    inset 0 0.5px 0 0 rgb(255 255 255 / 0.35),
+    inset 0 -1px 1px 0 rgb(120 24 0 / 0.35),
+    0 2px 4px -1px rgb(120 24 0 / 0.4),
+    0 0 0 0.5px rgb(150 36 4 / 0.6);
+  transition:
+    box-shadow var(--dur) ease,
+    filter var(--dur) ease,
+    transform var(--dur-fast) ease;
+}
+.btn-glossy-spark:hover {
+  filter: brightness(1.06);
+}
+.btn-glossy-spark:active {
+  box-shadow:
+    inset 0 1px 2px 0 rgb(120 24 0 / 0.4),
+    0 1px 2px -1px rgb(120 24 0 / 0.4),
+    0 0 0 0.5px rgb(150 36 4 / 0.6);
+  filter: brightness(0.97);
+  transform: scale(0.98);
+}
+
+/* ── Selected state (chips, options) — deliberately not a CTA. ── */
+.chip-selected {
+  color: #fff;
+  background-color: rgb(var(--spark-rgb));
+  box-shadow:
+    inset 0 0.5px 0 0 rgb(255 255 255 / 0.28),
+    0 0 0 0.5px rgb(150 36 4 / 0.5);
+}
+
+.btn-press {
+  transition: transform var(--dur-fast) ease;
+}
+.btn-press:active {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-glossy,
+  .btn-glossy-spark,
+  .btn-press {
+    transition: none;
+    animation: none;
+  }
+}

@@ -1,0 +1,212 @@
+/* ══════════════════════════════════════════════════════════════════════
+ * Hellyeah · Raw design tokens
+ *
+ * Two surfaces, one spark. Light by default; dark moments (hero panels,
+ * terminal cards, the X-Ray live stream, footers) opt in with `.zone-dark`,
+ * which re-binds the same token names to dark values. `.dark` is aliased so
+ * shadcn whole-app dark mode resolves to the same brand values.
+ *
+ * Colors are stored as raw "R G B" triplets so they compose with alpha via
+ * `rgb(var(--c-spark) / 0.08)`. Solid aliases (`--spark`, `--mint`, …) exist
+ * for direct use. The shadcn semantic contract is bridged in theme.css.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Neutral canvas (LIGHT) — triplets ── */
+  --c-ink: 255 255 255; /* page base / highest surface in light */
+  --c-canvas: 246 247 247; /* app background + sidebar/inset frame (#F6F7F7) */
+  --c-surface: 255 255 255; /* cards, popovers */
+  --c-line: 234 234 234; /* hairline borders, dividers */
+  --c-line2: 212 212 212; /* stronger hairline / input border */
+  --c-muted: 102 102 102; /* captions, labels, placeholder — 5.7:1 on white */
+  --c-muted2: 64 64 64; /* secondary body text */
+  --c-cream: 10 10 10; /* primary text / foreground */
+
+  /* ── Brand spark + data colors (LIGHT-tuned for AA on white) ── */
+  --c-spark: 255 67 1; /* Spark Orange — the one brand accent */
+  --c-acid: 102 122 24; /* Acid lime, darkened for text on light */
+  --c-mint: 31 138 91; /* Mint, darkened for text on light */
+  --c-peri: 78 96 198; /* Peri blue, darkened for text on light */
+  --c-amber: 176 110 0; /* Amber, darkened for "pending" on light */
+  --c-amber-fill: 255 176 54; /* true brand Amber for tinted fills/borders — the darkened --c-amber goes khaki at low alpha. Same in both zones. */
+  --c-danger: 209 63 42; /* warm red — destructive */
+  --c-spark-ink: 194 53 3; /* spark darkened for text sitting on a spark tint — plain --c-spark is only 2.89:1 there */
+  --c-mint-ink: 26 106 71; /* mint darkened for text sitting on a mint tint */
+  --c-amber-ink: 145 90 0; /* amber darkened for text sitting on an amber tint — plain --c-amber is only 3.92:1 there */
+  --c-danger-ink: 168 42 24; /* danger darkened for text sitting on a danger tint — plain --c-danger is only 4.15:1 there */
+
+  /* ── Decorative ── */
+  --grid-rgb: 0 0 0;
+  --grid-a: 0.05;
+  --glass-fg: 0 0 0;
+  --hair-rgb: 212 212 212;
+  --spark-rgb: 255 67 1;
+
+  /* ── Solid convenience aliases ── */
+  --ink: rgb(var(--c-ink));
+  --canvas: rgb(var(--c-canvas));
+  --surface: rgb(var(--c-surface));
+  --line: rgb(var(--c-line));
+  --line2: rgb(var(--c-line2));
+  --muted: rgb(var(--c-muted));
+  --muted2: rgb(var(--c-muted2));
+  --cream: rgb(var(--c-cream));
+  --spark: rgb(var(--c-spark));
+  --acid: rgb(var(--c-acid));
+  --mint: rgb(var(--c-mint));
+  --peri: rgb(var(--c-peri));
+  --amber: rgb(var(--c-amber));
+  --amber-fill: rgb(var(--c-amber-fill));
+  --danger: rgb(var(--c-danger));
+  --spark-ink: rgb(var(--c-spark-ink));
+  --mint-ink: rgb(var(--c-mint-ink));
+  --amber-ink: rgb(var(--c-amber-ink));
+  --danger-ink: rgb(var(--c-danger-ink));
+
+  /* ── Status mapping (campaign / creative / job state) ── */
+  --status-serving: rgb(var(--c-mint)); /* serving  → green */
+  --status-pending: rgb(var(--c-amber)); /* pending review → amber */
+  --status-paused: rgb(var(--c-muted)); /* paused   → gray */
+  --status-failed: rgb(var(--c-danger)); /* failed   → red */
+  --status-launching: rgb(var(--c-spark)); /* launching → spark */
+
+  /* ── Typography ── */
+  --font-sans:
+    var(--font-sans-app, "Inter"), ui-sans-serif, system-ui, -apple-system,
+    sans-serif;
+  --font-display:
+    var(--font-display-app, "General Sans"), var(--font-sans-app, "Inter"),
+    ui-sans-serif, system-ui, sans-serif;
+  --font-mono:
+    var(--font-mono-app, "Space Grotesk"), ui-monospace, "SF Mono", Menlo,
+    monospace;
+  --font-code:
+    var(--font-code-app, "IBM Plex Mono"), ui-monospace, "SF Mono", Menlo,
+    monospace;
+  --font-serif:
+    var(--font-serif-app, "EB Garamond"), Georgia, "Times New Roman", serif;
+
+  --tracking-display: -0.04em;
+  --tracking-tighter2: -0.022em;
+  --tracking-tightish: -0.011em;
+  --tracking-eyebrow: 0.14em;
+  --tracking-chip: 0.1em;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  --text-display: 52px;
+  --text-h1: 40px;
+  --text-h2: 28px;
+  --text-h3: 20px;
+  --text-lg: 16px;
+  --text-base: 14px;
+  --text-sm: 13px;
+  --text-xs: 12px;
+  --text-mono-sm: 12.5px;
+  --text-eyebrow: 11px;
+  --text-chip: 10.5px;
+
+  --leading-display: 1.05;
+  --leading-heading: 1.1;
+  --leading-body: 1.55;
+  --leading-mono: 1.85;
+
+  /* ── Spacing (4px base) ── */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* ── Radii ── */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-control: 10px;
+  --radius-card: 14px;
+  --radius-lg: 18px;
+  --radius-pill: 9999px;
+
+  /* ── Layout chrome ── */
+  --sidebar-width: 248px;
+  --sidebar-width-collapsed: 64px;
+  --header-height: 60px;
+  --content-max: 1200px;
+
+  /* ── Control heights ── */
+  --control-h-sm: 32px;
+  --control-h: 40px;
+  --control-h-lg: 44px;
+
+  /* ── Shadows (minimal — the brand leans on hairlines) ── */
+  --shadow-none: none;
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 0.08);
+  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+  --shadow-pop: 0 16px 40px -12px rgb(0 0 0 / 0.35);
+  --shadow-spark:
+    0 0 0 1px rgb(255 67 1 / 0.4), 0 8px 32px -8px rgb(255 67 1 / 0.45);
+
+  /* Floating panels — a faint 5% black hairline ring carries the edge, backed
+   * by a tight contact drop for a hint of depth. Soft on the canvas frame. */
+  --shadow-raised: 0 0 0 1px rgb(0 0 0 / 0.05), 0 1px 2px rgb(0 0 0 / 0.04);
+
+  /* ── Motion ── */
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-spring: cubic-bezier(0.16, 0.86, 0.32, 1);
+  --dur-fast: 0.12s;
+  --dur: 0.18s;
+  --dur-slow: 0.32s;
+}
+
+/* ── Dark zone — hero, terminal cards, data panels, footer.
+ *    `.dark` is aliased so shadcn whole-app dark mode matches. ── */
+.zone-dark,
+.dark {
+  --c-ink: 0 0 0;
+  --c-canvas: 15 15 15;
+  --c-surface: 15 15 15;
+  --c-line: 31 31 31;
+  --c-line2: 42 42 42;
+  --c-muted: 140 140 140; /* lightened from #737373 → AA on dark surfaces */
+  --c-muted2: 161 161 161;
+  --c-cream: 237 237 237;
+
+  /* Data colors regain full vibrance on dark */
+  --c-spark: 255 67 1;
+  --c-acid: 233 255 83;
+  --c-mint: 183 240 199;
+  --c-peri: 136 154 219;
+  --c-amber: 255 176 54;
+  --c-danger: 240 90 70;
+  --c-spark-ink: 255 138 99; /* tints sit on near-black in this zone, so ink lightens instead of darkens */
+  --c-mint-ink: 183 240 199;
+  --c-amber-ink: 255 176 54;
+  --c-danger-ink: 240 90 70;
+
+  --grid-rgb: 255 255 255;
+  --grid-a: 0.045;
+  --glass-fg: 255 255 255;
+  --hair-rgb: 42 42 42;
+  --spark-rgb: 255 67 1;
+
+  /* Dark: a faint white hairline ring carries the edge (5% black is invisible
+   * on dark), with an inset top highlight for the lift and a contact drop. */
+  --shadow-raised:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.08), 0 0 0 1px rgb(255 255 255 / 0.08),
+    0 1px 2px rgb(0 0 0 / 0.4);
+}
+
+/* The `.zone-dark` wrapper paints its own surface (a band on a light page). */
+.zone-dark {
+  color: rgb(var(--c-cream));
+  background-color: rgb(var(--c-ink));
+}

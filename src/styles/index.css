@@ -1,0 +1,25 @@
+/* ══════════════════════════════════════════════════════════════════════
+ * Exercise entry stylesheet.
+ *
+ * Mirrors `@hellyeah/ui/styles.css` from the product repo: Tailwind v4 →
+ * raw tokens → shadcn/brand bridge + @theme → base layer → type roles →
+ * brand utilities. Dark moments opt in with `.zone-dark`.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+@import "tailwindcss";
+
+@import "./tokens.css";
+@import "./theme.css";
+@import "./base.css";
+@import "./type.css";
+@import "./utilities.css";
+
+/* The product apps set these with next/font. Here they come from Google Fonts
+ * (see index.html). General Sans is not on Google Fonts, so display headings
+ * fall back to Inter in this sandbox. */
+:root {
+  --font-sans-app: "Inter";
+  --font-display-app: "Inter";
+  --font-mono-app: "Space Grotesk";
+  --font-code-app: "IBM Plex Mono";
+}

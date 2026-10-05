@@ -1,0 +1,168 @@
+/* ══════════════════════════════════════════════════════════════════════
+ * Hellyeah · shadcn ↔ brand token bridge
+ *
+ * shadcn/ui components style against a fixed CSS-variable contract
+ * (--background, --foreground, --primary, --border, --ring, --radius, …).
+ * Here we alias that contract onto the Hellyeah brand tokens, so every
+ * shadcn/Radix component inherits the brand automatically — including the
+ * `.zone-dark` inversion, because these aliases reference `--c-*`, which
+ * re-bind inside a dark zone.
+ *
+ * `@theme inline` then exposes BOTH the shadcn color tokens AND the brand
+ * utilities (bg-spark, text-cream, border-line, …) to Tailwind v4.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+/* shadcn `dark:` utilities fire inside brand dark zones AND `.dark`. */
+@custom-variant dark (&:is(.dark *),
+&:is(.zone-dark *));
+
+:root {
+  /* ── shadcn semantic contract → Hellyeah tokens ── */
+  --background: rgb(var(--c-canvas));
+  --foreground: rgb(var(--c-cream));
+
+  --card: rgb(var(--c-surface));
+  --card-foreground: rgb(var(--c-cream));
+
+  --popover: rgb(var(--c-surface));
+  --popover-foreground: rgb(var(--c-cream));
+
+  /* Primary = the DS default button: cream ink on light, inverts on dark. */
+  --primary: rgb(var(--c-cream));
+  --primary-foreground: rgb(var(--c-ink));
+
+  --secondary: rgb(var(--c-canvas));
+  --secondary-foreground: rgb(var(--c-cream));
+
+  --muted: rgb(var(--c-canvas));
+  --muted-foreground: rgb(var(--c-muted));
+
+  /* Neutral subtle hover/active surface — works in both zones. */
+  --accent: rgb(var(--c-cream) / 0.06);
+  --accent-foreground: rgb(var(--c-cream));
+
+  --destructive: rgb(var(--c-danger));
+  --destructive-foreground: rgb(255 255 255);
+
+  --border: rgb(var(--c-line));
+  --input: rgb(var(--c-line2));
+  --ring: rgb(var(--c-line2));
+
+  /* Sidebar surface — the canvas-grey rail/inset frame so the white content
+   * card reads as a distinct floating surface. Cream ink, neutral hairline
+   * hover/active and focus ring. */
+  --sidebar: rgb(var(--c-canvas));
+  --sidebar-foreground: rgb(var(--c-cream));
+  --sidebar-accent: rgb(var(--c-line));
+  --sidebar-accent-foreground: rgb(var(--c-cream));
+  --sidebar-border: rgb(var(--c-line));
+  --sidebar-ring: rgb(var(--c-line2));
+
+  /* Charts / data viz → a single Spark-Orange hue stepped by lightness, never a
+   * multi-hue rainbow. Spark is the one brand accent; chart-1 is full Spark and
+   * each step lightens and softens for supporting series. Series read
+   * var(--chart-N) and never hardcode a brand color. */
+  --chart-1: oklch(0.658 0.231 35);
+  --chart-2: oklch(0.72 0.175 38);
+  --chart-3: oklch(0.78 0.13 42);
+  --chart-4: oklch(0.83 0.092 48);
+  --chart-5: oklch(0.88 0.06 55);
+
+  /* Control-radius baseline; cards step up to 14px (see @theme). */
+  --radius: 10px;
+}
+
+@theme inline {
+  /* ── shadcn color tokens (kept as the component contract) ── */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* ── Brand color utilities (bg-spark, text-cream, border-line, …) ── */
+  --color-ink: rgb(var(--c-ink));
+  --color-canvas: rgb(var(--c-canvas));
+  --color-surface: rgb(var(--c-surface));
+  --color-line: rgb(var(--c-line));
+  --color-line2: rgb(var(--c-line2));
+  --color-muted2: rgb(var(--c-muted2));
+  --color-cream: rgb(var(--c-cream));
+  --color-spark: rgb(var(--c-spark));
+  --color-acid: rgb(var(--c-acid));
+  --color-mint: rgb(var(--c-mint));
+  --color-peri: rgb(var(--c-peri));
+  --color-amber: rgb(var(--c-amber));
+  --color-amber-fill: rgb(var(--c-amber-fill));
+  --color-danger: rgb(var(--c-danger));
+  --color-spark-ink: rgb(var(--c-spark-ink));
+  --color-mint-ink: rgb(var(--c-mint-ink));
+  --color-amber-ink: rgb(var(--c-amber-ink));
+  --color-danger-ink: rgb(var(--c-danger-ink));
+
+  /* ── Fonts ── (mirror tokens.css; reference the app-set --font-*-app so the
+   * generated utilities resolve a real stack, never a self-referential cycle) */
+  --font-sans:
+    var(--font-sans-app, "Inter"), ui-sans-serif, system-ui, -apple-system,
+    sans-serif;
+  --font-display:
+    var(--font-display-app, "General Sans"), var(--font-sans-app, "Inter"),
+    ui-sans-serif, system-ui, sans-serif;
+  --font-mono:
+    var(--font-mono-app, "Space Grotesk"), ui-monospace, "SF Mono", Menlo,
+    monospace;
+  --font-code:
+    var(--font-code-app, "IBM Plex Mono"), ui-monospace, "SF Mono", Menlo,
+    monospace;
+  --font-serif:
+    var(--font-serif-app, "EB Garamond"), Georgia, "Times New Roman", serif;
+
+  /* ── Radii — card is the signature 14px (rounded-lg + rounded-card) ── */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-control: 10px;
+  --radius-card: 14px;
+  --radius-badge: 6px;
+  --radius-pill: 9999px;
+
+  /* ── Tracking ── */
+  --tracking-display: var(--tracking-display);
+  --tracking-tighter2: var(--tracking-tighter2);
+  --tracking-tightish: var(--tracking-tightish);
+  --tracking-eyebrow: var(--tracking-eyebrow);
+  --tracking-chip: var(--tracking-chip);
+
+  /* ── Shadows ── */
+  --shadow-pop: var(--shadow-pop);
+  --shadow-card: var(--shadow-card);
+  --shadow-spark: var(--shadow-spark);
+  --shadow-raised: var(--shadow-raised);
+}
+

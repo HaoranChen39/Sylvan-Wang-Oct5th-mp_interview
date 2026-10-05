@@ -1,0 +1,52 @@
+/* ══════════════════════════════════════════════════════════════════════
+ * Hellyeah · Base layer
+ *
+ * Hairline-default borders, brand body type, and the `.font-data` helper for
+ * machine-readable numerals. Light by default.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
+    text-rendering: optimizeLegibility;
+    @apply bg-background text-foreground antialiased;
+  }
+
+  ::selection {
+    color: rgb(var(--c-ink));
+    background: rgb(var(--c-cream));
+  }
+
+  /* Heading hierarchy — General Sans display face, medium weight, tight
+   * tracking (never bold). */
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+  }
+  h1 {
+    letter-spacing: var(--tracking-display);
+  }
+  h2 {
+    letter-spacing: var(--tracking-tighter2);
+  }
+  h3 {
+    letter-spacing: var(--tracking-tightish);
+  }
+
+  /* Machine-readable numerals — money, counts, IDs, timestamps. */
+  .font-data {
+    font-family: var(--font-mono);
+    font-feature-settings: "tnum" 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+}
