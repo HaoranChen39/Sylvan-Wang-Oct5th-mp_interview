@@ -51,8 +51,10 @@ export type ReasonCode =
   | "ambiguous_exchange"
   | "ambiguous_broker"
   | "ambiguous_desk"
+  | "ambiguous_lending"
   // allow
   | "no_risk_signals"
+  | "ambiguous_term_no_finance_context"
   | "user_already_verified";
 
 export interface BusinessProfileInput {
@@ -125,7 +127,15 @@ const RESTRICTED_BRAND_TEXT_PATTERNS: Array<{
   { pattern: /\bdraftkings\b/i, category: "gambling" },
   { pattern: /\bfanduel\b/i, category: "gambling" },
   { pattern: /\bpoker\s*stars\b/i, category: "gambling" },
-  { pattern: /\bstake\b/i, category: "gambling" },
+  // "stake" is an ordinary English word ("Stake House BBQ", "high stakes",
+  // "stake a claim"). On its own it is not evidence of the Stake.com brand, so
+  // only match it next to a domain suffix or gambling vocabulary. The hostname
+  // check above still catches stake.com itself.
+  {
+    pattern:
+      /\bstake(?:\s*\.\s*(?:com|us)\b|\s+(?:casino|sportsbook|poker|bets?|betting|originals)\b)/i,
+    category: "gambling",
+  },
   { pattern: /\b1xbet\b/i, category: "gambling" },
   { pattern: /\btotal\s*wine\b/i, category: "alcohol" },
   { pattern: /\bonlyfans\b/i, category: "adult-content" },
@@ -173,7 +183,9 @@ const HIGH_SIGNAL_PATTERNS: Array<{
   },
   {
     pattern:
-      /\b(?:payday[\W_]*loans?|payday[\W_]*lend(?:er|ing)|title[\W_]*loans?|cash[\W_]*advance[\W_]*loans?|predatory[\W_]*lend(?:er|ing))\b/iu,
+      // Payday lenders rarely call themselves "payday". They describe the
+      // product: instant / same-day / fast cash loans, no credit check.
+      /\b(?:payday[\W_]*loans?|payday[\W_]*lend(?:er|ing)|title[\W_]*loans?|cash[\W_]*advance[\W_]*loans?|predatory[\W_]*lend(?:er|ing)|(?:instant|same[\W_]*day|same[\W_]*hour|fast|quick|emergency)[\W_]*(?:cash[\W_]*|personal[\W_]*)?loans?|no[\W_]*credit[\W_]*check[\W_]*(?:cash[\W_]*)?loans?|loans?[^.]{0,80}\bno[\W_]*credit[\W_]*check|no[\W_]*credit[\W_]*check[^.]{0,80}\bloans?)\b/iu,
     category: "payday-loans",
   },
   {
@@ -200,7 +212,28 @@ const AMBIGUOUS_PATTERNS: Array<{ reasonCode: ReasonCode; patterns: RegExp[] }> 
     { reasonCode: "ambiguous_exchange", patterns: [/\bexchanges?\b/i] },
     { reasonCode: "ambiguous_broker", patterns: [/\bbrokers?\b/i] },
     { reasonCode: "ambiguous_desk", patterns: [/\bdesk\b/i, /\btrading desk\b/i] },
+    // Mortgage brokers, student-loan refinancing and SBA lenders are fine;
+    // short-term consumer loans are not. A bare "loan" needs a human.
+    { reasonCode: "ambiguous_lending", patterns: [/\bloans?\b/i, /\blending\b/i] },
   ];
+
+/**
+ * The ambiguous terms above only carry their restricted meaning in a finance
+ * setting. A "desk" at a furniture shop or an "exchange" for boat parts is not
+ * a trading desk or a crypto exchange. We only escalate an ambiguous term when
+ * the profile also talks about money markets, investing or financial services.
+ *
+ * Deliberately broad: a false hit here costs one human look, a miss lets a
+ * forex shop through. "trading", "exchange", "broker" and "desk" are not in
+ * this list, so they cannot supply their own context ("trading card shop").
+ * Lending words are, on purpose: any loan product goes to a human.
+ */
+const FINANCE_CONTEXT =
+  /\b(?:financ(?:e|ial|ing)|insurance|invest(?:ing|ment|ments|or|ors)?|stocks?|equit(?:y|ies)|options|futures|securities|forex|fx|currenc(?:y|ies)|crypto(?:currency|currencies)?|bitcoin|ethereum|tokens?|coins?|portfolios?|wealth|brokerage|margin|leverage|commodit(?:y|ies)|credit|loans?|lending|mortgages?|money|cash|banking|fintech|payments?)\b/i;
+
+export function hasFinanceContext(text: string): boolean {
+  return FINANCE_CONTEXT.test(text);
+}
 
 // ---------------------------------------------------------------------------
 // Checks
@@ -296,6 +329,7 @@ export function checkAmbiguousSignals(text: string): AmbiguousSignal[] {
  * State-aware review of a business profile.
  *
  * - explicit violation → block, whatever the onboarding state
+ * - ambiguous signal, described business, no finance context → allow
  * - ambiguous signal during onboarding → review (defer to research / a human)
  * - ambiguous signal after onboarding is COMPLETE → allow (the user is verified)
  * - nothing → allow
@@ -323,6 +357,24 @@ export function reviewBusinessProfile(
   const ambiguous = checkAmbiguousSignals(`${profile.websiteUrl ?? ""} ${text}`);
   if (ambiguous.length > 0) {
     const first = ambiguous[0]!;
+
+    // A described business with no finance vocabulary at all: the term is
+    // being used in its everyday sense. Keep the trace in evidence so CS can
+    // see what was considered and discarded. A profile with no description
+    // stays in review: we cannot tell, so a human should.
+    const described = (profile.description ?? "").trim().length > 0;
+    if (described && !hasFinanceContext(text)) {
+      return {
+        verdict: "allow",
+        confidence: "high",
+        reasonCode: "ambiguous_term_no_finance_context",
+        evidence: ambiguous.map(
+          (s) => `"${s.signal}" ignored: no financial context`
+        ),
+        suggestedAction: "continue_normal_flow",
+      };
+    }
+
     if (onboardingState === "COMPLETE") {
       return {
         verdict: "allow",
