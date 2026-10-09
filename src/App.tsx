@@ -164,7 +164,8 @@ export function App() {
       {awaiting.length > 0 ? (
         <InsightBar icon={<Hourglass />} tone="spark">
           <span className="font-medium">
-            {awaiting.length} {awaiting.length === 1 ? "business needs" : "businesses need"} a decision.
+            <span className="font-data">{awaiting.length}</span>{" "}
+            {awaiting.length === 1 ? "business needs" : "businesses need"} a decision.
           </span>{" "}
           <span className="text-muted-foreground">
             Oldest has waited <span className="font-data">{formatDuration(oldestWait)}</span>.
@@ -426,7 +427,7 @@ function DetailPane({
           </div>
           <div className="flex shrink-0 flex-col items-end gap-1">
             <span className="font-data text-foreground text-label-13-mono">{formatDuration(row.waitingMs)}</span>
-            <span className="text-label-12 text-muted2">{human ? "until decided" : isReview ? "in queue" : "since submitted"}</span>
+            <Eyebrow className="text-muted2">{human ? "until decided" : isReview ? "in queue" : "since submitted"}</Eyebrow>
           </div>
         </div>
         <blockquote className="border-l-2 border-line2 pl-3 text-copy-14 text-foreground">
@@ -439,7 +440,7 @@ function DetailPane({
         <p className="text-copy-14 text-foreground">{explanation.why}</p>
         {explanation.check ? (
           <div className="flex flex-col gap-1 rounded-control bg-amber-fill/10 px-3 py-2.5">
-            <span className="text-label-12 font-medium text-amber">Check before deciding</span>
+            <Eyebrow className="text-amber">Check before deciding</Eyebrow>
             <span className="text-copy-14 font-medium text-foreground">{explanation.check}</span>
           </div>
         ) : null}
@@ -470,12 +471,16 @@ function DetailPane({
             />
           ) : (
             <div className="flex items-center gap-2">
-              <Button onClick={() => onDraft("allowed")} size="sm" variant="ghost">
-                {human ? "Change to allow" : "Allow"}
-              </Button>
-              <Button onClick={() => onDraft("blocked")} size="sm" variant="destructive">
-                {human ? "Change to block" : "Block"}
-              </Button>
+              {human?.decision !== "allowed" ? (
+                <Button onClick={() => onDraft("allowed")} size="sm" variant="ghost">
+                  {human ? "Change to allow" : "Allow"}
+                </Button>
+              ) : null}
+              {human?.decision !== "blocked" ? (
+                <Button onClick={() => onDraft("blocked")} size="sm" variant="destructive">
+                  {human ? "Change to block" : "Block"}
+                </Button>
+              ) : null}
             </div>
           )
         ) : (
@@ -484,18 +489,18 @@ function DetailPane({
       </Chunk>
 
       <Chunk n={4} title="Record">
-        <dl className="grid grid-cols-[7rem_minmax(0,1fr)] gap-x-3 gap-y-1.5 text-label-12">
-          <dt className="text-muted-foreground">Reason code</dt>
+        <dl className="grid grid-cols-[8rem_minmax(0,1fr)] items-baseline gap-x-3 gap-y-2 text-label-12">
+          <dt><Eyebrow>Reason code</Eyebrow></dt>
           <dd className="font-mono text-muted2">{result.reasonCode}</dd>
-          <dt className="text-muted-foreground">Onboarding</dt>
+          <dt><Eyebrow>Onboarding</Eyebrow></dt>
           <dd className="font-mono text-muted2">{profile.onboardingState}</dd>
-          <dt className="text-muted-foreground">Submitted</dt>
+          <dt><Eyebrow>Submitted</Eyebrow></dt>
           <dd className="font-data text-muted2">
             <time dateTime={profile.submittedAt}>{new Date(profile.submittedAt).toLocaleString()}</time>
           </dd>
           {history.length > 0 ? (
             <>
-              <dt className="text-muted-foreground">History</dt>
+              <dt><Eyebrow>History</Eyebrow></dt>
               <dd className="flex flex-col gap-1">
                 {history.map((e) => (
                   <span className="text-muted2" key={e.seq}>
@@ -544,7 +549,7 @@ function Highlighted({ text, terms }: { text: string; terms: string[] }) {
     <>
       {highlight(text, terms).map((s, i) =>
         s.hit ? (
-          <mark className="rounded-[3px] bg-amber-fill/25 px-0.5 text-inherit" key={i}>
+          <mark className="rounded-badge bg-amber-fill/25 px-0.5 text-inherit" key={i}>
             {s.text}
           </mark>
         ) : (
@@ -611,7 +616,7 @@ function DecisionForm({
         ))}
       </div>
       <label className="flex flex-col gap-1.5" htmlFor={noteId}>
-        <span className="text-label-12 font-medium text-muted-foreground">Note (required): what did you check?</span>
+        <Eyebrow>Note (required): what did you check?</Eyebrow>
         <textarea
           aria-describedby={`${noteId}-err`}
           aria-invalid={touched && error ? true : undefined}
