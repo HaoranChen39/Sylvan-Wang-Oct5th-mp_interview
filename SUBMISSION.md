@@ -9,7 +9,7 @@ Code is on branch `sylvan/review-queue`.
 ```
 npm install
 npm run dev     # http://localhost:5173
-npm test        # 40 tests, including the original 5
+npm test        # 44 tests, including the original 5
 ```
 
 | File | What changed |
@@ -23,11 +23,11 @@ npm test        # 40 tests, including the original 5
 
 ## Task 1 · Make the queue readable
 
-The CS team is not technical, so the page uses plain language and no raw codes. They come for two jobs: decide businesses the rule could not decide, and find one business when a customer asks why they were blocked.
+The CS team is not technical, so the page leads with plain language; raw reason codes appear only in each business's Record. They come for two jobs: decide businesses the rule could not decide, and find one business when a customer asks why they were blocked.
 
 | Requirement | Where |
 | --- | --- |
-| Business, verdict, why, waiting time | Every list row; full detail in the right-hand pane |
+| Business, verdict, why, waiting time | Every list row shows the rule and its evidence in plain words; the detail pane's Record shows the reason code and every matched string |
 | Summary per verdict | Strip under the banner: needs decision / allowed / blocked, machine counts underneath |
 | Filter to what needs attention | "Needs decision" filter, on by default, oldest first |
 | Use the primitives | Card, Button, Eyebrow, InsightBar, Stat |
@@ -56,13 +56,13 @@ Two verdicts were wrong, two reviews were unnecessary, and one false block was w
 **Fixes**
 
 1. "stake" is blocked only as a brand: next to `.com`, or next to casino, sportsbook, bets.
-2. Payday lending is blocked by what it is: instant / same-day / fast loans, or "no credit check" with "loan". A plain "loan" goes to review.
-3. Ambiguous words (desk, exchange, broker, trading) go to review only if the profile also talks about money. No description stays in review.
+2. Payday lending is blocked on explicit wording: payday, title or cash-advance loans, or "no credit check" near "loan". Speed alone ("fast personal loans") and a plain "loan" go to review.
+3. Ambiguous words (desk, exchange, broker, trading) go to review only if the profile, website address included, also talks about money. No description stays in review.
 4. A bare "bar" no longer counts as alcohol (protein bar, salad bar, bar exam). Cocktail bar, sports bar and pub are still blocked.
 
 **Kept on purpose.** Rateboard and Brightside stay in review: they are real grey areas. Peak Trading Academy stays allowed because an original test protects it. My question for the team: finished onboarding says who a business is, not what it sells today, so I would re-check when the description changes.
 
-**Tests.** The 5 original tests are unchanged and pass. 12 new tests cover each fix, and one pins all 12 verdicts so any future change shows what moved.
+**Tests.** The 5 original tests are unchanged and pass. 16 new tests cover each fix and its edge cases, and one pins all 12 verdicts so any future change shows what moved.
 
 **Trade-off.** A wrong block loses a real customer, so blocks need explicit evidence. A wrong review costs a few minutes, so inside finance I lean towards review. Outside finance I stopped reviewing, because noisy reviews teach people to approve without reading. The risk: a bad actor who avoids every money word passes the review step; the explicit rules and Google's own review still apply.
 

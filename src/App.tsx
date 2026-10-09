@@ -144,10 +144,10 @@ export function App() {
   // The pane always shows something: the chosen row if it is still in view,
   // otherwise the first row. That is also what moves the reviewer on to the
   // next business after a decision takes the current one out of the queue.
-  const selected =
-    shown.find((r) => r.profile.id === selectedId) ??
-    (selectedId ? rows.find((r) => r.profile.id === selectedId && filter !== "awaiting") : undefined) ??
-    shown[0];
+  // The pane only ever shows a business that is in the current list (search +
+  // filter). If the chosen one drops out, the first visible one takes its
+  // place, so the reviewer can never act on a business they cannot see.
+  const selected = shown.find((r) => r.profile.id === selectedId) ?? shown[0];
 
   const select = useCallback((id: string) => {
     setSelectedId(id);
@@ -240,6 +240,8 @@ export function App() {
           onQuery={(v) => {
             setQuery(v);
             setLimit(PAGE_SIZE);
+            setDraft(null);
+            setLastSaved(null);
           }}
           onSelect={select}
           query={query}
@@ -381,9 +383,15 @@ function QueueList({
                       </>
                     ) : null}
                   </span>
-                  <span className="line-clamp-1 text-copy-13 text-muted-foreground">
-                    {row.human ? row.human.tags.join(" · ") : row.explanation.why}
-                  </span>
+                  {/* Why: the rule's reason and its evidence, kept even after a
+                      person decides, so machine and human stay side by side. */}
+                  <span className="text-label-12 text-foreground">{REASON_LABELS[row.result.reasonCode]}</span>
+                  <span className="line-clamp-2 text-copy-13 text-muted-foreground">{row.explanation.why}</span>
+                  {row.human ? (
+                    <span className="line-clamp-1 text-copy-13 text-foreground">
+                      Decided: {row.human.tags.join(" · ")}
+                    </span>
+                  ) : null}
                 </button>
               </li>
             );
@@ -513,9 +521,15 @@ function DetailPane({
       <Chunk n={4} title="Record">
         <dl className="grid grid-cols-[8rem_minmax(0,1fr)] items-baseline gap-x-3 gap-y-2 text-label-13">
           <dt><Eyebrow>Rule</Eyebrow></dt>
-          {/* The raw code stays reachable for engineers on hover, never shown to CS. */}
-          <dd className="text-foreground" title={`Reason code: ${result.reasonCode}`}>
+          <dd className="flex flex-col gap-0.5 text-foreground">
             {REASON_LABELS[result.reasonCode]}
+            <span className="font-mono text-label-12-mono text-muted-foreground">{result.reasonCode}</span>
+          </dd>
+          <dt><Eyebrow>Evidence</Eyebrow></dt>
+          <dd className="flex flex-col gap-0.5 font-mono text-label-12-mono text-muted-foreground">
+            {result.evidence.map((e) => (
+              <span key={e}>{e}</span>
+            ))}
           </dd>
           <dt><Eyebrow>Onboarding</Eyebrow></dt>
           <dd className="text-foreground">{ONBOARDING_LABELS[profile.onboardingState]}</dd>

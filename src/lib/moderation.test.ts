@@ -197,3 +197,46 @@ describe("alcohol rule: 'bar' is not alcohol on its own", () => {
     }
   });
 });
+
+describe("review fixes: explicit evidence and URL context", () => {
+  it("sends a fast but credit-checked lender to review, not block", () => {
+    const result = reviewBusinessProfile(
+      { businessName: "Test Co", description: "Fast personal loans with credit checks and repayment over five years." },
+      "START"
+    );
+    expect(result.verdict).toBe("review");
+    expect(result.reasonCode).toBe("ambiguous_lending");
+  });
+
+  it("still blocks 'no credit check' loans, even across sentences", () => {
+    for (const description of [
+      "No credit check loans approved in minutes.",
+      "Loans up to $1,000. No credit check.",
+    ]) {
+      const result = reviewBusinessProfile({ businessName: "Test Co", description }, "START");
+      expect(result.verdict, description).toBe("block");
+      expect(result.reasonCode).toBe("explicit_payday_loans");
+    }
+  });
+
+  it("reads the website address as financial context", () => {
+    const result = reviewBusinessProfile(
+      {
+        businessName: "Apex Exchange",
+        websiteUrl: "https://crypto-exchange.example.com",
+        description: "A marketplace for digital assets.",
+      },
+      "START"
+    );
+    expect(result.verdict).toBe("review");
+    expect(result.reasonCode).toBe("ambiguous_exchange");
+  });
+});
+
+describe("evidence stays readable", () => {
+  it("quotes only 'No credit check' for the queued lender", () => {
+    const profile = byId("bp_09");
+    const result = reviewBusinessProfile(profile, profile.onboardingState);
+    expect(result.evidence).toEqual(["No credit check"]);
+  });
+});

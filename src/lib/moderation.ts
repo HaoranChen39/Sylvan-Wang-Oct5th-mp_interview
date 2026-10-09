@@ -186,9 +186,11 @@ const HIGH_SIGNAL_PATTERNS: Array<{
   },
   {
     pattern:
-      // Payday lenders rarely call themselves "payday". They describe the
-      // product: instant / same-day / fast cash loans, no credit check.
-      /\b(?:payday[\W_]*loans?|payday[\W_]*lend(?:er|ing)|title[\W_]*loans?|cash[\W_]*advance[\W_]*loans?|predatory[\W_]*lend(?:er|ing)|(?:instant|same[\W_]*day|same[\W_]*hour|fast|quick|emergency)[\W_]*(?:cash[\W_]*|personal[\W_]*)?loans?|no[\W_]*credit[\W_]*check[\W_]*(?:cash[\W_]*)?loans?|loans?[^.]{0,80}\bno[\W_]*credit[\W_]*check|no[\W_]*credit[\W_]*check[^.]{0,80}\bloans?)\b/iu,
+      // Payday lenders rarely call themselves "payday", so "no credit check"
+      // near "loan" (even across a sentence) also counts as explicit. Speed
+      // alone ("fast personal loans") is NOT explicit evidence: it goes to
+      // review through the ambiguous "loan" signal instead.
+      /\b(?:payday[\W_]*loans?|payday[\W_]*lend(?:er|ing)|title[\W_]*loans?|cash[\W_]*advance[\W_]*loans?|predatory[\W_]*lend(?:er|ing)|no[\W_]*credit[\W_]*check[\W_]*(?:cash[\W_]*)?loans?|(?<=\bloans?\b[\s\S]{0,200})no[\W_]*credit[\W_]*check|no[\W_]*credit[\W_]*check(?=[\s\S]{0,200}\bloans?\b))\b/iu,
     category: "payday-loans",
   },
   {
@@ -366,7 +368,9 @@ export function reviewBusinessProfile(
     // see what was considered and discarded. A profile with no description
     // stays in review: we cannot tell, so a human should.
     const described = (profile.description ?? "").trim().length > 0;
-    if (described && !hasFinanceContext(text)) {
+    // Same text the ambiguous check read, URL included: a "crypto" in the
+    // website address is financial context too.
+    if (described && !hasFinanceContext(`${profile.websiteUrl ?? ""} ${text}`)) {
       return {
         verdict: "allow",
         confidence: "high",
