@@ -168,3 +168,32 @@ describe("rule fixes (Task 2)", () => {
     });
   });
 });
+
+describe("alcohol rule: 'bar' is not alcohol on its own", () => {
+  const verdictFor = (description: string) =>
+    reviewBusinessProfile({ businessName: "Test Co", description }, "START");
+
+  it("does not block businesses where 'bar' means something else", () => {
+    for (const description of [
+      "High-protein snack bars with no added sugar",
+      "Fresh salad bar and smoothies for office lunches",
+      "Online bar exam prep courses for law graduates",
+    ]) {
+      expect(verdictFor(description).verdict, description).toBe("allow");
+    }
+  });
+
+  it("still blocks bars and pubs that serve alcohol", () => {
+    for (const description of [
+      "Rooftop cocktail bar with live DJs",
+      "Neighbourhood wine bar and small plates",
+      "Traditional Irish pub with live music",
+      "Sports bar showing every game",
+      "Family bar & grill downtown",
+    ]) {
+      const result = verdictFor(description);
+      expect(result.verdict, description).toBe("block");
+      expect(result.reasonCode).toBe("explicit_alcohol");
+    }
+  });
+});

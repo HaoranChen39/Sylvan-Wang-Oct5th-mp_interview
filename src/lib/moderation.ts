@@ -168,7 +168,10 @@ const HIGH_SIGNAL_PATTERNS: Array<{
   },
   {
     pattern:
-      /\b(?:liquor|alcohol(?:ic)?|beer|wine|brewery|breweries|distillery|distilleries|wineries|bottle[\W_]*shops?|pubs?|bars?)\b/iu,
+      // A bare "bar" is not alcohol: protein bars, salad bars, bar exam prep.
+      // Only block it next to a drinks word, or as "bar & grill". "pub"
+      // stays: it almost always means a place that serves alcohol.
+      /\b(?:liquor|alcohol(?:ic)?|beer|wine|brewery|breweries|distillery|distilleries|wineries|bottle[\W_]*shops?|(?:gastro)?pubs?|(?:cocktail|sports|whisk(?:e)?y|tiki|dive|tapas)[\W_]*bars?|bars?[\W_]*(?:&|and)[\W_]*grill)\b/iu,
     category: "alcohol",
   },
   {
