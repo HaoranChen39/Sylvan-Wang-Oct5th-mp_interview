@@ -15,6 +15,7 @@ import {
   CATEGORY_LABELS,
   extractHostname,
   type BusinessProfileInput,
+  type OnboardingState,
   type ReasonCode,
   type ReviewResult,
 } from "./moderation";
@@ -168,4 +169,47 @@ function list(terms: string[]): string {
 
 function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Every reason code in words CS can read. Typed as a full Record, so adding a
+ * reason code to the rule without a label here fails the type check.
+ */
+export const REASON_LABELS: Record<ReasonCode, string> = {
+  explicit_gambling: "Gambling or betting",
+  explicit_adult: "Adult content",
+  explicit_weapons: "Weapons",
+  explicit_tobacco: "Tobacco or vaping",
+  explicit_alcohol: "Alcohol",
+  explicit_drugs: "Cannabis or drugs",
+  explicit_crypto_exchange: "Crypto or forex trading",
+  explicit_payday_loans: "Payday or predatory lending",
+  explicit_illegal: "Illegal activity",
+  ambiguous_trading: "Possible finance term: trading",
+  ambiguous_exchange: "Possible finance term: exchange",
+  ambiguous_broker: "Possible finance term: broker",
+  ambiguous_desk: "Possible finance term: desk",
+  ambiguous_lending: "Possible lending product",
+  no_risk_signals: "Nothing restricted found",
+  ambiguous_term_no_finance_context: "Finance-like word, not a finance business",
+  user_already_verified: "Business already verified",
+};
+
+export const ONBOARDING_LABELS: Record<OnboardingState, string> = {
+  NOT_STARTED: "Not started",
+  START: "Just signed up",
+  IDENTIFY: "Identifying the business",
+  ENRICHMENT: "Gathering business details",
+  MANUAL: "Manual onboarding",
+  COMPLETE: "Onboarding complete",
+};
+
+/** "Sep 30, 10:00 AM". Short and unambiguous for a person scanning. */
+export function formatWhen(iso: string): string {
+  return new Date(iso).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }

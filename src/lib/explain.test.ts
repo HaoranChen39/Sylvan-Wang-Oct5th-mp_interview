@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { profiles } from "../data/profiles";
-import { explain, highlight } from "./explain";
+import { explain, formatWhen, highlight, ONBOARDING_LABELS, REASON_LABELS } from "./explain";
 import { reviewBusinessProfile } from "./moderation";
 
 const run = (id: string) => {
@@ -54,5 +54,17 @@ describe("highlight", () => {
 
   it("returns the text untouched when there is nothing to mark", () => {
     expect(highlight("Family dentistry", [])).toEqual([{ text: "Family dentistry", hit: false }]);
+  });
+});
+
+describe("readable labels", () => {
+  it("never shows CS a raw code or enum", () => {
+    for (const label of [...Object.values(REASON_LABELS), ...Object.values(ONBOARDING_LABELS)]) {
+      expect(label).not.toMatch(/_|^[A-Z]+$/);
+    }
+  });
+
+  it("formats times for scanning", () => {
+    expect(formatWhen("2026-09-30T10:00:00Z")).toMatch(/^Sep 30, \d{1,2}:\d{2} [AP]M$/);
   });
 });

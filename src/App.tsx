@@ -21,7 +21,7 @@ import {
   summarize,
   validateNote,
 } from "./lib/decisions";
-import { type Explanation, explain, highlight } from "./lib/explain";
+import { type Explanation, explain, formatWhen, highlight, ONBOARDING_LABELS, REASON_LABELS } from "./lib/explain";
 import { extractHostname, type ReviewResult, reviewBusinessProfile } from "./lib/moderation";
 
 /** Stand-in for the signed-in CS user. */
@@ -455,7 +455,7 @@ function DetailPane({
           <div className="flex flex-col gap-1">
             <p className="text-copy-14 text-foreground">“{human.note}”</p>
             <span className="font-data text-label-12-mono text-muted2">
-              {human.reviewer} · {new Date(human.decidedAt).toLocaleString()}
+              {human.reviewer} · {formatWhen(human.decidedAt)}
             </span>
           </div>
         ) : null}
@@ -489,22 +489,30 @@ function DetailPane({
       </Chunk>
 
       <Chunk n={4} title="Record">
-        <dl className="grid grid-cols-[8rem_minmax(0,1fr)] items-baseline gap-x-3 gap-y-2 text-label-12">
-          <dt><Eyebrow>Reason code</Eyebrow></dt>
-          <dd className="font-mono text-muted2">{result.reasonCode}</dd>
-          <dt><Eyebrow>Onboarding</Eyebrow></dt>
-          <dd className="font-mono text-muted2">{profile.onboardingState}</dd>
-          <dt><Eyebrow>Submitted</Eyebrow></dt>
-          <dd className="font-data text-muted2">
-            <time dateTime={profile.submittedAt}>{new Date(profile.submittedAt).toLocaleString()}</time>
+        <dl className="grid grid-cols-[8rem_minmax(0,1fr)] items-baseline gap-x-3 gap-y-2 text-label-13">
+          <dt><Eyebrow>Rule</Eyebrow></dt>
+          {/* The raw code stays reachable for engineers on hover, never shown to CS. */}
+          <dd className="text-foreground" title={`Reason code: ${result.reasonCode}`}>
+            {REASON_LABELS[result.reasonCode]}
           </dd>
-          {history.length > 0 ? (
+          <dt><Eyebrow>Onboarding</Eyebrow></dt>
+          <dd className="text-foreground">{ONBOARDING_LABELS[profile.onboardingState]}</dd>
+          <dt><Eyebrow>Submitted</Eyebrow></dt>
+          <dd className="text-foreground">
+            <time className="font-data" dateTime={profile.submittedAt}>{formatWhen(profile.submittedAt)}</time>
+            <span className="text-muted-foreground">
+              {" "}· <span className="font-data">{formatDuration(Date.now() - Date.parse(profile.submittedAt))}</span> ago
+            </span>
+          </dd>
+          {history.length > 1 ? (
             <>
               <dt><Eyebrow>History</Eyebrow></dt>
               <dd className="flex flex-col gap-1">
                 {history.map((e) => (
-                  <span className="text-muted2" key={e.seq}>
-                    <span className="font-data">#{e.seq}</span> {e.decision} · “{e.note}”
+                  <span className="text-foreground" key={e.seq}>
+                    {e.decision === "allowed" ? "Allowed" : "Blocked"} by {e.reviewer},{" "}
+                    <span className="font-data">{formatWhen(e.decidedAt)}</span>
+                    <span className="block text-muted-foreground">“{e.note}”</span>
                   </span>
                 ))}
               </dd>
@@ -685,7 +693,7 @@ function DecisionLogCard({ log }: { log: DecisionLog }) {
                 <span className="font-data text-label-12-mono text-muted2 sm:text-right">
                   {e.reviewer}
                   <br />
-                  <time dateTime={e.decidedAt}>{new Date(e.decidedAt).toLocaleString()}</time>
+                  <time dateTime={e.decidedAt}>{formatWhen(e.decidedAt)}</time>
                 </span>
               </li>
             ))}
