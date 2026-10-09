@@ -12,16 +12,32 @@ import { type QueuedProfile, profiles } from "./data/profiles";
 import {
   appendDecision,
   type DecisionEntry,
+  firstDecisions,
   type DecisionLog,
   formatDuration,
   type HumanDecision,
   latestDecisions,
   type Outcome,
   outcomeFor,
+  patterns,
+  RULE_CANDIDATE,
+  ruleCandidateStatus,
   summarize,
   validateNote,
+  validateTags,
 } from "./lib/decisions";
-import { type Explanation, explain, formatWhen, highlight, ONBOARDING_LABELS, REASON_LABELS } from "./lib/explain";
+import {
+  decisionTags,
+  type Explanation,
+  explain,
+  formatWhen,
+  highlight,
+  isPresetTag,
+  MAX_TAG_LENGTH,
+  normalizeTag,
+  ONBOARDING_LABELS,
+  REASON_LABELS,
+} from "./lib/explain";
 import { extractHostname, type ReviewResult, reviewBusinessProfile } from "./lib/moderation";
 
 /** Stand-in for the signed-in CS user. */
@@ -90,9 +106,13 @@ export function App() {
 
   const rows = useMemo<Row[]>(() => {
     const latest = latestDecisions(log);
+    const first = firstDecisions(log);
     return MACHINE.map((m) => {
       const human = latest.get(m.profile.id);
-      const end = human ? Date.parse(human.decidedAt) : now;
+      // Time to decision stops at the FIRST decision; a later correction
+      // must not make the business look like it waited longer.
+      const firstDecision = first.get(m.profile.id);
+      const end = firstDecision ? Date.parse(firstDecision.decidedAt) : now;
       return {
         ...m,
         human,
@@ -135,11 +155,12 @@ export function App() {
     setLastSaved(null);
   }, []);
 
-  const decide = (row: Row, decision: HumanDecision, note: string) => {
+  const decide = (row: Row, decision: HumanDecision, tags: string[], note: string) => {
     setLog((prev) =>
       appendDecision(prev, {
         profileId: row.profile.id,
         decision,
+        tags,
         note,
         reviewer: REVIEWER,
         machine: row.result,
@@ -188,6 +209,7 @@ export function App() {
               key={selected.profile.id}
               onDecide={decide}
               onDraft={setDraft}
+              log={log}
               row={selected}
               saved={
                 lastSaved && lastSaved.name !== selected.profile.businessName
@@ -252,11 +274,6 @@ function SummaryStrip({ summary }: { summary: ReturnType<typeof summarize> }) {
           </span>
           <br />
           <span className="font-data">{summary.decidedByHuman}</span> decided by a person
-          {summary.overturned > 0 ? (
-            <>
-              {" "}· <span className="font-data">{summary.overturned}</span> overturned
-            </>
-          ) : null}
         </p>
       </CardContent>
     </Card>
@@ -365,7 +382,7 @@ function QueueList({
                     ) : null}
                   </span>
                   <span className="line-clamp-1 text-copy-13 text-muted-foreground">
-                    {row.human ? `“${row.human.note}”` : row.explanation.why}
+                    {row.human ? row.human.tags.join(" · ") : row.explanation.why}
                   </span>
                 </button>
               </li>
@@ -393,16 +410,18 @@ function QueueList({
 
 function DetailPane({
   row,
+  log,
   draft,
   saved,
   onDraft,
   onDecide,
 }: {
   row: Row;
+  log: DecisionLog;
   draft: HumanDecision | null;
   saved?: string | null;
   onDraft: (d: HumanDecision | null) => void;
-  onDecide: (row: Row, decision: HumanDecision, note: string) => void;
+  onDecide: (row: Row, decision: HumanDecision, tags: string[], note: string) => void;
 }) {
   const { profile, result, explanation, human, history } = row;
   const isReview = result.verdict === "review";
@@ -453,6 +472,7 @@ function DetailPane({
       >
         {human ? (
           <div className="flex flex-col gap-1">
+            <p className="text-copy-14 font-medium text-foreground">{human.tags.join(" · ")}</p>
             <p className="text-copy-14 text-foreground">“{human.note}”</p>
             <span className="font-data text-label-12-mono text-muted2">
               {human.reviewer} · {formatWhen(human.decidedAt)}
@@ -467,7 +487,9 @@ function DetailPane({
               id={profile.id}
               onCancel={() => onDraft(null)}
               onChangeDecision={onDraft}
-              onSubmit={(note) => onDecide(row, draft, note)}
+              learned={learnedTags(log, result.reasonCode, draft)}
+              onSubmit={(tags, note) => onDecide(row, draft, tags, note)}
+              reasonCode={result.reasonCode}
             />
           ) : (
             <div className="flex items-center gap-2">
@@ -512,7 +534,9 @@ function DetailPane({
                   <span className="text-foreground" key={e.seq}>
                     {e.decision === "allowed" ? "Allowed" : "Blocked"} by {e.reviewer},{" "}
                     <span className="font-data">{formatWhen(e.decidedAt)}</span>
-                    <span className="block text-muted-foreground">“{e.note}”</span>
+                    <span className="block text-muted-foreground">
+                      {e.tags.join(" · ")}: “{e.note}”
+                    </span>
                   </span>
                 ))}
               </dd>
@@ -582,23 +606,60 @@ function WebsiteLink({ url }: { url: string }) {
   );
 }
 
+/**
+ * Tags reviewers added themselves for the same kind of case and decision.
+ * Offered as one-click options, so the second reviewer never retypes them.
+ */
+function learnedTags(log: DecisionLog, reasonCode: ReviewResult["reasonCode"], decision: HumanDecision): string[] {
+  const seen = new Set<string>();
+  for (const e of log) {
+    if (e.machineReasonCode !== reasonCode || e.decision !== decision) continue;
+    for (const t of e.tags) if (!isPresetTag(reasonCode, t)) seen.add(t);
+  }
+  return [...seen];
+}
+
 function DecisionForm({
   id,
   decision,
+  reasonCode,
+  learned,
   onSubmit,
   onCancel,
   onChangeDecision,
 }: {
   id: string;
   decision: HumanDecision;
-  onSubmit: (note: string) => void;
+  reasonCode: ReviewResult["reasonCode"];
+  learned: string[];
+  onSubmit: (tags: string[], note: string) => void;
   onCancel: () => void;
   onChangeDecision: (d: HumanDecision) => void;
 }) {
+  const [picked, setPicked] = useState<string[]>([]);
+  const [added, setAdded] = useState<string[]>([]);
+  const [draftTag, setDraftTag] = useState("");
   const [note, setNote] = useState("");
   const [touched, setTouched] = useState(false);
-  const error = validateNote(note);
+  const preset = decisionTags(reasonCode, decision);
+  const options = [...new Set([...preset, ...learned, ...added])];
+  // Switching Allow/Block changes the options; drop tags that no longer apply.
+  const tags = picked.filter((t) => options.includes(t));
+  const tagError = validateTags(tags);
+  const noteError = validateNote(note);
+  const error = tagError ?? noteError;
   const noteId = `note-${id}`;
+  const toggle = (t: string) =>
+    setPicked((cur) => (cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t]));
+  const addTag = () => {
+    const t = normalizeTag(draftTag);
+    if (!t) return;
+    const existing = options.find((o) => o.toLowerCase() === t.toLowerCase());
+    const tag = existing ?? t;
+    if (!existing) setAdded((cur) => [...cur, tag]);
+    setPicked((cur) => (cur.includes(tag) ? cur : [...cur, tag]));
+    setDraftTag("");
+  };
 
   return (
     <form
@@ -606,7 +667,7 @@ function DecisionForm({
       onSubmit={(e) => {
         e.preventDefault();
         setTouched(true);
-        if (!error) onSubmit(note);
+        if (!error) onSubmit(tags, note);
       }}
     >
       <div aria-label="Decision" className="flex gap-1" role="radiogroup">
@@ -623,12 +684,55 @@ function DecisionForm({
           </Button>
         ))}
       </div>
+      <fieldset className="flex flex-col gap-1.5">
+        <legend className="mb-1.5">
+          <Eyebrow>What did you find? (pick at least one)</Eyebrow>
+        </legend>
+        <div className="flex flex-wrap gap-1.5">
+          {options.map((t) => {
+            const on = tags.includes(t);
+            return (
+              <Button
+                aria-pressed={on}
+                key={t}
+                onClick={() => toggle(t)}
+                size="sm"
+                variant={on ? "ghost" : "outline"}
+                className={on ? "border-foreground" : undefined}
+              >
+                {t}
+                {!preset.includes(t) ? <span className="text-muted2">· added</span> : null}
+              </Button>
+            );
+          })}
+        </div>
+        {/* A case nobody foresaw (say, "protein bar") gets its own tag. */}
+        <div className="flex gap-2">
+          <input
+            aria-label="Add your own tag"
+            className="h-8 min-w-0 flex-1 rounded-control border border-input bg-background px-3 text-label-13 text-foreground outline-none placeholder:text-muted-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            maxLength={MAX_TAG_LENGTH}
+            onChange={(e) => setDraftTag(e.target.value)}
+            onKeyDown={(e) => {
+              // Enter here adds the tag instead of submitting the decision.
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addTag();
+              }
+            }}
+            placeholder="Not listed? Add your own tag"
+            value={draftTag}
+          />
+          <Button disabled={!normalizeTag(draftTag)} onClick={addTag} size="sm" variant="outline">
+            Add
+          </Button>
+        </div>
+      </fieldset>
       <label className="flex flex-col gap-1.5" htmlFor={noteId}>
-        <Eyebrow>Note (required): what did you check?</Eyebrow>
+        <Eyebrow>Note (required): what exactly did you see?</Eyebrow>
         <textarea
           aria-describedby={`${noteId}-err`}
-          aria-invalid={touched && error ? true : undefined}
-          autoFocus
+          aria-invalid={touched && noteError ? true : undefined}
           className="min-h-16 rounded-control border border-input bg-background px-3 py-2 text-copy-14 text-foreground outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-danger"
           id={noteId}
           onBlur={() => setTouched(true)}
@@ -673,7 +777,8 @@ function DecisionLogCard({ log }: { log: DecisionLog }) {
           Every human decision, newest first. Entries are never edited; a changed decision adds a new one.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-col gap-5">
+        {log.length > 0 ? <PatternList log={log} /> : null}
         {log.length === 0 ? (
           <p className="text-copy-13 text-muted-foreground">No decisions yet.</p>
         ) : (
@@ -688,6 +793,7 @@ function DecisionLogCard({ log }: { log: DecisionLog }) {
                     <span aria-hidden className="text-muted2">→</span>
                     <DecisionBadge decision={e.decision} />
                   </div>
+                  <p className="text-copy-13 text-foreground">{e.tags.join(" · ")}</p>
                   <p className="text-copy-13 text-muted-foreground">“{e.note}”</p>
                 </div>
                 <span className="font-data text-label-12-mono text-muted2 sm:text-right">
@@ -701,5 +807,55 @@ function DecisionLogCard({ log }: { log: DecisionLog }) {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * Human decisions grouped by rule reason and what the reviewer found. This is
+ * the bridge back to rules: a large, unanimous pattern from several reviewers
+ * becomes a proposed rule change; a split one stays with people.
+ */
+function PatternList({ log }: { log: DecisionLog }) {
+  const rows = patterns(log);
+  const STATUS = {
+    candidate: { label: "Rule candidate", cls: "text-mint" },
+    building: { label: "Collecting evidence", cls: "text-muted-foreground" },
+    split: { label: "Reviewers disagree, keep human", cls: "text-amber" },
+  } as const;
+  return (
+    <div className="flex flex-col gap-2 rounded-control border p-3">
+      <Eyebrow>Patterns in human decisions</Eyebrow>
+      <ul className="flex flex-col gap-1.5">
+        {rows.map((p) => {
+          const status = STATUS[ruleCandidateStatus(p)];
+          const total = p.allowed + p.blocked;
+          return (
+            <li
+              className="grid gap-1 text-label-13 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-4"
+              key={`${p.reasonCode}|${p.tag}`}
+            >
+              <span className="text-foreground">
+                {REASON_LABELS[p.reasonCode]} <span className="text-muted2">→</span> {p.tag}
+                {!isPresetTag(p.reasonCode, p.tag) ? (
+                  <span className="text-muted-foreground"> (new tag, added by a reviewer)</span>
+                ) : null}
+              </span>
+              <span className="text-muted-foreground">
+                <span className="font-data">{p.allowed}</span> allowed ·{" "}
+                <span className="font-data">{p.blocked}</span> blocked ·{" "}
+                <span className="font-data">{p.reviewers}</span> {p.reviewers === 1 ? "reviewer" : "reviewers"}
+                {" · "}
+                <span className={status.cls}>
+                  {status.label}
+                  {status.label === "Collecting evidence" ? (
+                    <span className="font-data"> ({total}/{RULE_CANDIDATE.minDecisions})</span>
+                  ) : null}
+                </span>
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }

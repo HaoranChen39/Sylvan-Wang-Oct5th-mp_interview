@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { profiles } from "../data/profiles";
-import { explain, formatWhen, highlight, ONBOARDING_LABELS, REASON_LABELS } from "./explain";
+import {
+  decisionTags,
+  explain,
+  formatWhen,
+  highlight,
+  isPresetTag,
+  MAX_TAG_LENGTH,
+  normalizeTag,
+  ONBOARDING_LABELS,
+  REASON_LABELS,
+} from "./explain";
 import { reviewBusinessProfile } from "./moderation";
 
 const run = (id: string) => {
@@ -66,5 +76,23 @@ describe("readable labels", () => {
 
   it("formats times for scanning", () => {
     expect(formatWhen("2026-09-30T10:00:00Z")).toMatch(/^Sep 30, \d{1,2}:\d{2} [AP]M$/);
+  });
+});
+
+describe("decision tags", () => {
+  it("offers preset tags that answer the check question", () => {
+    expect(decisionTags("ambiguous_broker", "allowed")).toContain("Insurance broker");
+    expect(decisionTags("ambiguous_broker", "blocked")).toContain("Forex or crypto broker");
+  });
+
+  it("normalizes reviewer-added tags so repeats group together", () => {
+    expect(normalizeTag("  protein   BAR ")).toBe("Protein bar");
+    expect(normalizeTag("   ")).toBeNull();
+    expect(normalizeTag("x".repeat(80))?.length).toBe(MAX_TAG_LENGTH);
+  });
+
+  it("tells preset tags from reviewer-added ones", () => {
+    expect(isPresetTag("ambiguous_broker", "insurance broker")).toBe(true);
+    expect(isPresetTag("ambiguous_broker", "Protein bar")).toBe(false);
   });
 });

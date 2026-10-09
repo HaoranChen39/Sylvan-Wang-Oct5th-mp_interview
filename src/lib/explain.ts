@@ -33,28 +33,69 @@ export interface Explanation {
  * What each ambiguous reason code is worried about, and how a reviewer can
  * tell. One entry per code: this is the reviewer playbook, written once.
  */
-const REVIEW_PLAYBOOK: Partial<Record<ReasonCode, { worry: string; check: string }>> = {
+const REVIEW_PLAYBOOK: Record<
+  "ambiguous_broker" | "ambiguous_exchange" | "ambiguous_trading" | "ambiguous_desk" | "ambiguous_lending",
+  { worry: string; check: string; allow: string[]; block: string[] }
+> = {
   ambiguous_broker: {
     worry: "can mean a securities, forex or crypto broker",
     check: "Does the site offer investment, trading or crypto accounts?",
+    allow: ["Insurance broker", "Real estate or other non-finance broker"],
+    block: ["Securities or investment broker", "Forex or crypto broker"],
   },
   ambiguous_exchange: {
     worry: "can mean a currency or crypto trading exchange",
     check: "Can users trade or hold currency, or only view rates or swap goods?",
+    allow: ["Shows rates only, no trading", "Exchange of goods, not money"],
+    block: ["Users can trade or hold currency", "Crypto exchange"],
   },
   ambiguous_trading: {
     worry: "can mean securities, forex or crypto trading",
     check: "Do they execute trades or hold customer money, or only teach or sell goods?",
+    allow: ["Education or content only", "Trading of goods, not financial"],
+    block: ["Executes trades or holds customer money", "Trading signals or copy trading"],
   },
   ambiguous_desk: {
     worry: "can mean a trading desk",
     check: "Is this a financial trading business, or something else with a desk?",
+    allow: ["Furniture or office products"],
+    block: ["Financial trading desk"],
   },
   ambiguous_lending: {
     worry: "can mean a payday, title or cash-advance loan",
     check: "Is it short-term consumer credit? Mortgages, business and student loans are fine.",
+    allow: ["Mortgage, business or student loans"],
+    block: ["Short-term consumer credit"],
   },
 };
+
+/**
+ * The preset tags a reviewer picks from when deciding. Each one answers the
+ * reason code's "check" question. Reviewers can also add their own tag for a
+ * case nobody foresaw; see `normalizeTag` and `isPresetTag`.
+ */
+export function decisionTags(reasonCode: ReasonCode, decision: "allowed" | "blocked"): string[] {
+  const play = (REVIEW_PLAYBOOK as Partial<Record<ReasonCode, { allow: string[]; block: string[] }>>)[reasonCode];
+  return play ? [...(decision === "allowed" ? play.allow : play.block)] : [];
+}
+
+/** True when a tag comes from the playbook rather than a reviewer. */
+export function isPresetTag(reasonCode: ReasonCode, tag: string): boolean {
+  return [...decisionTags(reasonCode, "allowed"), ...decisionTags(reasonCode, "blocked")].some(
+    (t) => t.toLowerCase() === tag.toLowerCase()
+  );
+}
+
+export const MAX_TAG_LENGTH = 40;
+
+/**
+ * Clean a reviewer-typed tag so "  protein  BAR " and "Protein bar" count as
+ * the same tag in the patterns. Returns null when nothing usable is left.
+ */
+export function normalizeTag(raw: string): string | null {
+  const t = raw.replace(/\s+/g, " ").trim().slice(0, MAX_TAG_LENGTH);
+  return t ? t.charAt(0).toUpperCase() + t.slice(1).toLowerCase() : null;
+}
 
 export function explain(
   result: ReviewResult,
@@ -94,7 +135,7 @@ export function explain(
   }
 
   // review
-  const play = REVIEW_PLAYBOOK[result.reasonCode];
+  const play = (REVIEW_PLAYBOOK as Partial<Record<ReasonCode, { worry: string; check: string }>>)[result.reasonCode];
   const term = result.evidence[0] ?? "";
   return {
     why: play
