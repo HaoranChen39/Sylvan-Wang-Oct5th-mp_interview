@@ -251,8 +251,6 @@ export function App() {
           total={visible.length}
         />
       </div>
-
-      <DecisionLogCard log={log} />
     </main>
   );
 }
