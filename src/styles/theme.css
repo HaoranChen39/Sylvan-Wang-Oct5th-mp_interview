@@ -16,7 +16,14 @@
 @custom-variant dark (&:is(.dark *),
 &:is(.zone-dark *));
 
-:root {
+/* Declared on the dark zones too, not only :root. A custom property that uses
+ * var() is resolved where it is declared, so aliases set only on :root keep
+ * their light values inside `.zone-dark` (bg-card stayed white while
+ * text-cream turned light). Re-declaring them here makes them re-resolve
+ * against the zone's --c-* values. */
+:root,
+.zone-dark,
+.dark {
   /* ── shadcn semantic contract → Hellyeah tokens ── */
   --background: rgb(var(--c-canvas));
   --foreground: rgb(var(--c-cream));
