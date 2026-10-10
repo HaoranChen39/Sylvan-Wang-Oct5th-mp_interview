@@ -67,7 +67,7 @@ const FILTERS: Array<{ id: Filter; label: string }> = [
   { id: "all", label: "All" },
   { id: "allowed", label: "Allowed" },
   { id: "blocked", label: "Blocked" },
-  { id: "human", label: "By a person" },
+  { id: "human", label: "Reviewed" },
 ];
 
 function matchesFilter(row: Row, filter: Filter): boolean {
@@ -273,7 +273,7 @@ function SummaryStrip({ summary }: { summary: ReturnType<typeof summarize> }) {
             {summary.machine.allow} allow · {summary.machine.review} review · {summary.machine.block} block
           </span>
           <br />
-          <span className="font-data">{summary.decidedByHuman}</span> decided by a person
+          <span className="font-data">{summary.decidedByHuman}</span> reviewed by CS
         </p>
       </CardContent>
     </Card>

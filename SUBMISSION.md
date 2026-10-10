@@ -74,12 +74,14 @@ A reviewer resolves a `review` as allowed or blocked; the machine verdict and th
 | --- | --- |
 | Allow or block, with a required note | Detail pane, section 3 |
 | Machine verdict next to the human one | List row `REVIEW → ALLOWED`; pane sections 2 and 3; every log entry |
-| Append-only log | Each decision adds an entry; nothing is edited or deleted; the latest decision counts |
+| Append-only log | Each decision adds an entry; nothing is edited or deleted; the latest decision counts. Each business's Record shows its own history; the "Reviewed" filter lists everything CS has decided |
 | Outcome in the summary | Needs decision / allowed / blocked update at once |
 
 **Tags as well as a note.** Notes cannot be counted, so the reviewer also picks what they found from a short list of tags for that reason code (for "broker": insurance broker, securities broker…). For an unexpected case they add their own tag, which is offered next time.
 
-**Patterns.** Under the log, decisions are grouped by reason code and tag. A group becomes a rule candidate at 20 identical decisions from 2+ reviewers; a split group stays with people.
+**The full log is not on the CS page.** Reviewers need to clear the queue and look up one business; the log as a whole serves team leads. Decisions are still recorded in full, ready for an internal view.
+
+**Patterns.** The log groups decisions by reason code and tag. A group becomes a rule candidate at 20 identical decisions from 2+ reviewers; a split group stays with people.
 
 **Decision handling, sized for a team of two or three.** Every decision can be traced to who made it, on what evidence, against what the rule said at the time.
 
@@ -105,7 +107,7 @@ Heavier process (assignment locks, sampled double review) comes only when the te
 **Turning repeated human decisions into rules**
 
 1. Capture decisions as tags, so they can be counted.
-2. Group by reason code and tag (the patterns view).
+2. Group by reason code and tag (`patterns()` in `decisions.ts`, tested).
 3. A group with enough volume, full agreement and 2+ reviewers becomes a rule proposal.
 4. The policy owner approves it; the test that pins all verdicts shows which businesses would change.
 5. Run the new rule silently next to the old one, then switch.
